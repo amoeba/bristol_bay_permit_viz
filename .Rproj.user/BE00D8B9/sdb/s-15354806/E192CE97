@@ -1,0 +1,17 @@
+{
+    "contents" : "#' convert.R\n#' Convert CSV to JSON\n#' Format is:\n#' nodes : [\n#'   { name, group }],\n#' links : [\n#'   {source, target, value}]\n\nlibrary(stringr)\nlibrary(jsonlite)\n\n\n# Read in permits csv\npermits <- read.csv(\"data/Permit_Download.csv\")\nnrow(permits)\n\n# First row is bogus\npermits <- permits[-1, ]\n\n# Add full name (unique ID)\npermits$full_name <- paste(permits$First.Name, permits$Middle, permits$Last.Name)\n# And trim them of whitespace\npermits$full_name <- str_trim(permits$full_name) \n\n# Create nodes and links in two passes\n# First pass: Nodes\n# Second pass: Links\n\n\n# Create central nodes (last name)\nnodes <- data.frame(last_name = unique(permits$Last.Name),\n                    full_name = NA,\n                    color = 0)\n\n# Create child nodes and their links\nlinks <- data.frame()\n\nfor (i in 1:nrow(nodes)) {\n  cat(paste0(i,\"\\n\"))\n  \n  # Collect people with same last name\n  same_last_name <- subset(permits, Last.Name == nodes[i,\"last_name\"])\n  \n  # Iterate over each person with that last name\n  if(nrow(same_last_name) > 0) {\n    for (j in 1:nrow(same_last_name)) {\n      # Create a node for them\n      nodes <- rbind(nodes,\n                     data.frame(last_name = nodes[i,\"last_name\"],\n                                full_name = same_last_name[j,\"full_name\"],\n                                color = 1))\n      \n      # Create a link for them\n      links <- rbind(links,\n                     data.frame(\n                       \"source\" = i - 1,\n                       \"target\" = nrow(nodes) - 1))\n    }\n  }\n}\n\noutput_csv <- file(\"./permits.json\")\nwriteLines(toJSON(list(\"nodes\" = nodes, \"links\" = links), pretty = TRUE), output_csv)\nclose(output_csv)\n",
+    "created" : 1430866725684.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "533714626",
+    "id" : "E192CE97",
+    "lastKnownWriteTime" : 1430866732,
+    "path" : "~/Projects/BBSalmonViz/R/convert.R",
+    "project_path" : "R/convert.R",
+    "properties" : {
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "type" : "r_source"
+}
